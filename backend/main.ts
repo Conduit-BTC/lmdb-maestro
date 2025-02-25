@@ -31,6 +31,29 @@ app.get('/keys', (req, res) => {
     }
 });
 
+app.delete('/delete', (req, res) => {
+    try {
+        console.log('DELETE /delete');
+        const { path, key } = req.query;
+        if (!path) {
+            res.status(400).json({ error: 'Path is required' });
+            return;
+        }
+        if (!key) {
+            res.status(400).json({ error: 'Key is required' });
+            return;
+        }
+
+        const db = getDb(path);
+
+        db.remove(key);
+
+        res.json({ key });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.get('/values', (req, res) => {
     try {
         console.log('GET /values');
