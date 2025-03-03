@@ -1,34 +1,24 @@
-import { RootDatabase, open } from 'lmdb';
+import { open } from 'lmdb';
 
-class LMDBInstance {
-    private static _instance: LMDBInstance;
-    private db: RootDatabase;
+// Cache opened databases to avoid reopening the same one multiple times
+const dbCache = new Map();
 
-    private constructor(path: string) {
-        if (!path) {
-            throw new Error('Path is required');
-        }
-        this.db = open({
-            path,
-            maxReaders: 100,
-            mapSize: 2 * 1024 * 1024 * 1024, // 2GB
-        });
+function getDb(path: string) {
+    if (dbCache.has(path)) {
+        return dbCache.get(path);
     }
 
-    // Static method to get the singleton instance
-    public static getInstance(path: string): LMDBInstance {
-        if (!LMDBInstance._instance) {
-            LMDBInstance._instance = new LMDBInstance(path);
-        }
-        return LMDBInstance._instance;
-    }
+    console.log(`Opening new LMDB database at: ${path}`);
 
-    // Getter for the database instance
-    public getDB(): RootDatabase {
-        return this.db;
-    }
+    const db = open({
+        path: path,
+        // Add any additional configuration options here
+        noSync: false,
+        maxDbs: 100,
+    });
+
+    dbCache.set(path, db);
+    return db;
 }
 
-export default function getDb(path: string): RootDatabase {
-    return LMDBInstance.getInstance(path).getDB();
-}
+export default getDb;
